@@ -50,5 +50,8 @@
       "no-console": "error"
     }
   },
+  "publishConfig": {
+    "@Valurank:registry": "https://npm.pkg.github.com"
+  },
   "packageManager": "yarn@3.6.3"
 }
