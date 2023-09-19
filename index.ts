@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { getColors } from "./getColors";
-import { createApi } from "./figma-rest-api";
-import { getSpacings } from "./getSpacings";
-import { getBorders } from "./getBorders";
-import { getSvgIcons } from "./getSvgIcons";
-import { createFile } from "./utils";
-import { getPngIcons } from "./getPngIcons";
-import { Style, getTypography } from "./getTypography";
+import { getColors } from "./src/getColors";
+import { createApi } from "./src/figma-rest-api";
+import { getSpacings } from "./src/getSpacings";
+import { getBorders } from "./src/getBorders";
+import { getSvgIcons } from "./src/getSvgIcons";
+import { createFile } from "./src/utils";
+import { getPngIcons } from "./src/getPngIcons";
+import { Style, getTypography } from "./src/getTypography";
 
 export async function main() {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
@@ -22,18 +22,18 @@ export async function main() {
     ],
   });
   const colors = await getColors(
-    nodes.nodes[process.env.FIGMA_COLORS_ID!]?.document
+    nodes.nodes[process.env.FIGMA_COLORS_ID!]?.document,
   );
   const spacings = await getSpacings(
-    nodes.nodes[process.env.FIGMA_SPACINGS_ID!]?.document
+    nodes.nodes[process.env.FIGMA_SPACINGS_ID!]?.document,
   );
   const borders = await getBorders(
-    nodes.nodes[process.env.FIGMA_RADIUS_ID!]?.document
+    nodes.nodes[process.env.FIGMA_RADIUS_ID!]?.document,
   );
   await getSvgIcons(nodes.nodes[process.env.FIGMA_SVG_ICONS_ID!]?.document);
   await getPngIcons(nodes.nodes[process.env.FIGMA_PNG_ICONS_ID!]?.document);
   const typography = await getTypography(
-    nodes.nodes[process.env.FIGMA_TYPOGRAPHY_ID!]
+    nodes.nodes[process.env.FIGMA_TYPOGRAPHY_ID!],
   );
 
   const light = `<?xml version="1.0" encoding="utf-8"?>
@@ -58,7 +58,7 @@ export const theme = {
     ${colors
       .map(
         (el) =>
-          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@android:color/${el.name}"),`
+          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@android:color/${el.name}"),`,
       )
       .join("\n    ")}
   },
@@ -75,11 +75,9 @@ export const theme = {
           `${el.name}: {\n      ${Object.entries(el.value!)
             .map(
               (el) =>
-                `${el[0]}: ${
-                  typeof el[1] === "string" ? `"${el[1]}"` : el[1]
-                }`
+                `${el[0]}: ${typeof el[1] === "string" ? `"${el[1]}"` : el[1]}`,
             )
-            .join(",\n      ")}\n    },`
+            .join(",\n      ")}\n    },`,
       )
       .join("\n    ")}
   }
