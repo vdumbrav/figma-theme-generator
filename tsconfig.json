@@ -1,0 +1,18 @@
+{
+  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node20/tsconfig"],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": false
+  },
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "ES2022",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src/**/*", "core/**/*", "api-figma/**/*"]
+}
