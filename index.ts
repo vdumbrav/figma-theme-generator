@@ -7,7 +7,7 @@ import { getSvgIcons } from "./src/getSvgIcons";
 import { createFile } from "./src/utils";
 import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
-config({ path: "../.env" });
+config({ path: "../.env.local" });
 export async function main() {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
   const nodes = await apis.getFileNodes({
