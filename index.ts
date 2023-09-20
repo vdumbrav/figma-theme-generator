@@ -1,4 +1,4 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { getColors } from "./src/getColors";
 import { createApi } from "./src/figma-rest-api";
 import { getSpacings } from "./src/getSpacings";
@@ -7,7 +7,7 @@ import { getSvgIcons } from "./src/getSvgIcons";
 import { createFile } from "./src/utils";
 import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
-
+config({ path: "../.env" });
 export async function main() {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
   const nodes = await apis.getFileNodes({
@@ -101,7 +101,7 @@ ${typography
   process.env.PATH_THEME && (await createFile(process.env.PATH_THEME, theme));
   process.env.PATH_CSS && (await createFile(process.env.PATH_CSS, css));
 }
-main().catch(console.error);
+main();
 
 const styleToCss = (style: Style) => {
   return Object.entries(style)
