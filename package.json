@@ -50,5 +50,5 @@
       "no-console": "error"
     }
   },
-  "packageManager": "yarn@3.6.3"
+  "packageManager": "yarn@4.0.0-rc.51"
 }
