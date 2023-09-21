@@ -39,6 +39,8 @@ export async function main() {
 
   const light = `<?xml version="1.0" encoding="utf-8"?>
   <resources>
+    <color name="primary_dark">#FFFFFF</color>
+
     ${colors
       .map((el) => `<color name="${el.name}">${el.light}</color>`)
       .join("\n    ")}
