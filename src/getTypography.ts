@@ -5,7 +5,7 @@ export const getTypography = async (fileNode: FileNode | null) => {
   if (fileNode?.document) {
     const stylesIds = Object.keys(fileNode.styles);
     const checker = (
-      node: Node
+      node: Node,
     ): node is NodeCommon & { type: "TEXT" } & TEXT => {
       return !!(
         node.type == "TEXT" &&
@@ -21,8 +21,7 @@ export const getTypography = async (fileNode: FileNode | null) => {
       };
     });
   } else {
-    console.log("typography not found");
-    return [];
+    throw new Error("Typography not found");
   }
 };
 

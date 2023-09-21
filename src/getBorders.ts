@@ -19,7 +19,6 @@ export const getBorders = async (node?: Node) => {
       }
     });
   } else {
-    console.log("borders not found");
-    return [];
+    throw new Error("borders not found");
   }
 };

@@ -75,6 +75,6 @@ export const getPngIcons = async (node?: Node) => {
   if (node) {
     await getImageByParams(node);
   } else {
-    console.log("png icons not found");
+    throw new Error("Png icons not found");
   }
 };

@@ -29,7 +29,6 @@ export const getSvgIcons = async (node?: Node) => {
     );
     return iconNames;
   } else {
-    console.log("svg icons not found");
-    return [];
+    throw new Error("svg icons not found");
   }
 };

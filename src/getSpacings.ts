@@ -7,6 +7,7 @@ export const getSpacings = async (node?: Node) => {
         return {
           name: el.children[0].characters
             .replace("--", "")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .replace(/-./g, (match: any) => match.charAt(1).toUpperCase())
             .replace(/\d/, "_$&"),
           value: el.children[1].absoluteBoundingBox.width,
@@ -16,7 +17,6 @@ export const getSpacings = async (node?: Node) => {
       }
     });
   } else {
-    console.log("spacings not found");
-    return [];
+    throw new Error("spacings not found");
   }
 };
