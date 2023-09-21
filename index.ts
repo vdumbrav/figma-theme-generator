@@ -8,6 +8,7 @@ import { createFile } from "./src/utils";
 import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
 config({ path: "../.env.local" });
+// config();
 export async function main() {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
   const nodes = await apis.getFileNodes({
@@ -41,15 +42,13 @@ export async function main() {
     ${colors
       .map((el) => `<color name="${el.name}">${el.light}</color>`)
       .join("\n    ")}
-  </resources>
-</xml>`;
+  </resources>`;
   const dark = `<?xml version="1.0" encoding="utf-8"?>
   <resources>
     ${colors
       .map((el) => `<color name="${el.name}">${el.dark}</color>`)
       .join("\n    ")}
-  </resources>
-</xml>`;
+  </resources>`;
 
   const theme = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
 const isIos = Platform.OS === "ios";
