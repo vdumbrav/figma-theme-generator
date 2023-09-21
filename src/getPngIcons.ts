@@ -1,18 +1,15 @@
-import axios from "axios";
 import { Node, createApi } from "./figma-rest-api";
-import { Checker, createFile, searchTree } from "./utils";
+import { Checker, createFile, fetchRetry, searchTree } from "./utils";
 
 const downloadFormAWS = async (
   icon: { url: string | null; name: string }[],
-  scale: number
+  scale: number,
 ) => {
   const iconNames: { name: string; path: string }[] = [];
   await Promise.all(
     icon.map(async ({ name, url }) => {
       if (url) {
-        const image = await axios.get(url, {
-          responseType: "arraybuffer",
-        });
+        const image = await fetchRetry(url);
         const fixedName =
           "_" +
           name
@@ -25,9 +22,9 @@ const downloadFormAWS = async (
         if (scale === 1) {
           iconNames.push({ name: fixedName, path });
         }
-        await createFile(path, image.data);
+        await createFile(path, image);
       }
-    })
+    }),
   );
   return iconNames;
 };
@@ -37,7 +34,7 @@ const checker = ((parentOfParent: Node) => {
     "children" in parentOfParent &&
     parentOfParent.children.find(
       (el) =>
-        "children" in el && el.children.find((el) => el.name.match(/^\d\d/))
+        "children" in el && el.children.find((el) => el.name.match(/^\d\d/)),
     )
   );
 }) as Checker;

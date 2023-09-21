@@ -1,6 +1,8 @@
 .env
 test
 
+.idea
+
 # node.js
 #
 node_modules/
