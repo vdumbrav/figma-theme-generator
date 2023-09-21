@@ -39,7 +39,7 @@ export const searchTree = <T = Node>(
   return nodes;
 };
 
-export const createFile = async (path: string, content: ArrayBuffer) => {
+export const createFile = async (path: string, content: ArrayBuffer | string) => {
   await fs.mkdir(process.env.ICONS_PATH!, { recursive: true });
-  await fs.writeFile(path, Buffer.from(content));
+  await fs.writeFile(path, typeof content === "string" ? content : Buffer.from(content));
 };
