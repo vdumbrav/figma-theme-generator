@@ -43,7 +43,7 @@ export const createFile = async (
   path: string,
   content: ArrayBuffer | string,
 ) => {
-  await fs.mkdir(path, { recursive: true });
+  await fs.mkdir(path.replace(/\/[^/]*$/, ""), { recursive: true });
   await fs.writeFile(
     path,
     typeof content === "string" ? content : Buffer.from(content),
