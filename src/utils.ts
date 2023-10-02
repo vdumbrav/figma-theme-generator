@@ -18,6 +18,22 @@ export const fetchRetry = async (
   }
 };
 
+export const fetchRetryText = async (
+  url: string,
+  retries = 5,
+): Promise<string> => {
+  try {
+    return await fetch(url).then((res) => res.text());
+  } catch (e) {
+    if (retries > 0) {
+      await delay(500);
+      return fetchRetryText(url, retries - 1);
+    } else {
+      throw e;
+    }
+  }
+};
+
 export type Checker = (
   node: Node,
 ) => node is NodeCommon &

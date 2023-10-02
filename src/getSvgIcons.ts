@@ -1,5 +1,5 @@
 import { Node, createApi } from "./figma-rest-api";
-import { createFile, fetchRetry } from "./utils";
+import { createFile, fetchRetryText } from "./utils";
 
 export const getSvgIcons = async (node?: Node) => {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
@@ -14,7 +14,8 @@ export const getSvgIcons = async (node?: Node) => {
     await Promise.all(
       Object.entries(iconAws.images).map(async ([id, url]) => {
         if (url) {
-          const image = await fetchRetry(url);
+          const image = await fetchRetryText(url);
+
           const name =
             "_" +
             iconNodes
@@ -23,7 +24,7 @@ export const getSvgIcons = async (node?: Node) => {
               .replace(/\//g, "");
           const path = `${process.env.ICONS_PATH}/${name}.svg`;
           iconNames.push({ name, path });
-          await createFile(path, image);
+          await createFile(path, image.replace(/fill=".*"/g, ""));
         }
       }),
     );
