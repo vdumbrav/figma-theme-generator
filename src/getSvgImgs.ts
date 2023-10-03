@@ -18,7 +18,7 @@ export const getSvgImgs = async (node?: Node) => {
           const name = node.children.find((el) => el.id === id)!.name;
           const path = `${process.env.IMAGES_PATH}/${name}.svg`;
           iconNames.push({ name, path });
-          await createFile(path, image.replace(/fill=".*"/g, ""));
+          await createFile(path, image);
         }
       }),
     );
