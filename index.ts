@@ -9,8 +9,8 @@ import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
 import { getPngImgs } from "./src/getPngImgs";
 import { getSvgImgs } from "./src/getSvgImgs";
-// config({ path: "../.env.local" });
-config();
+config({ path: "../.env.local" });
+// config();
 export async function main() {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
   const nodes = await apis.getFileNodes({
