@@ -9,8 +9,8 @@ import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
 import { getPngImgs } from "./src/getPngImgs";
 import { getSvgImgs } from "./src/getSvgImgs";
-config({ path: "../.env.local" });
-// config();
+// config({ path: "../.env.local" });
+config();
 export async function main() {
   const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
   const nodes = await apis.getFileNodes({
@@ -54,7 +54,7 @@ export async function main() {
       .map(
         (el) =>
           `<color name="${el.name}">${
-            el.light.length > 6
+            el.light.length > 7
               ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
               : el.light
           }</color>`,
@@ -69,7 +69,7 @@ export async function main() {
       .map(
         (el) =>
           `<color name="${el.name}">${
-            el.dark.length > 6
+            el.dark.length > 7
               ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
               : el.dark
           }</color>`,
