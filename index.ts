@@ -7,6 +7,8 @@ import { getSvgIcons } from "./src/getSvgIcons";
 import { createFile } from "./src/utils";
 import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
+import { getPngImgs } from "./src/getPngImgs";
+import { getSvgImgs } from "./src/getSvgImgs";
 config({ path: "../.env.local" });
 // config();
 export async function main() {
@@ -20,6 +22,8 @@ export async function main() {
       process.env.FIGMA_SVG_ICONS_ID!,
       process.env.FIGMA_PNG_ICONS_ID!,
       process.env.FIGMA_TYPOGRAPHY_ID!,
+      process.env.FIGMA_PNG_IMG_ID!,
+      process.env.FIGMA_SVG_IMG_ID!,
     ],
   });
   const colors = await getColors(
@@ -31,8 +35,13 @@ export async function main() {
   const borders = await getBorders(
     nodes.nodes[process.env.FIGMA_RADIUS_ID!]?.document,
   );
-  await getSvgIcons(nodes.nodes[process.env.FIGMA_SVG_ICONS_ID!]?.document);
-  await getPngIcons(nodes.nodes[process.env.FIGMA_PNG_ICONS_ID!]?.document);
+  await Promise.all([
+    getSvgIcons(nodes.nodes[process.env.FIGMA_SVG_ICONS_ID!]?.document),
+    getPngIcons(nodes.nodes[process.env.FIGMA_PNG_ICONS_ID!]?.document),
+    getPngImgs(nodes.nodes[process.env.FIGMA_PNG_IMG_ID!]?.document),
+    getSvgImgs(nodes.nodes[process.env.FIGMA_SVG_IMG_ID!]?.document),
+  ]);
+
   const typography = await getTypography(
     nodes.nodes[process.env.FIGMA_TYPOGRAPHY_ID!],
   );
@@ -42,13 +51,29 @@ export async function main() {
     <color name="primary_dark">#FFFFFF</color>
 
     ${colors
-      .map((el) => `<color name="${el.name}">${el.light}</color>`)
+      .map(
+        (el) =>
+          `<color name="${el.name}">${
+            el.light.length > 6
+              ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
+              : el.light
+          }</color>`,
+      )
       .join("\n    ")}
   </resources>`;
   const dark = `<?xml version="1.0" encoding="utf-8"?>
   <resources>
+    <color name="primary_dark">#000000</color>
+
     ${colors
-      .map((el) => `<color name="${el.name}">${el.dark}</color>`)
+      .map(
+        (el) =>
+          `<color name="${el.name}">${
+            el.dark.length > 6
+              ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
+              : el.dark
+          }</color>`,
+      )
       .join("\n    ")}
   </resources>`;
 
@@ -59,7 +84,7 @@ export const theme = {
     ${colors
       .map(
         (el) =>
-          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@android:color/${el.name}"),`,
+          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),`,
       )
       .join("\n    ")}
   },

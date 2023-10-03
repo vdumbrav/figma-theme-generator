@@ -1,9 +1,10 @@
 import { Node, createApi } from "./figma-rest-api";
 import { Checker, createFile, fetchRetry, searchTree } from "./utils";
 
-const downloadFormAWS = async (
+export const downloadFormAWS = async (
   icon: { url: string | null; name: string }[],
   scale: number,
+  pathToSave: string,
 ) => {
   const iconNames: { name: string; path: string }[] = [];
   await Promise.all(
@@ -16,7 +17,7 @@ const downloadFormAWS = async (
             .replace(/ ./g, (match) => match.charAt(1).toUpperCase())
             .replace(/\//g, "");
 
-        const path = `${process.env.ICONS_PATH}/${
+        const path = `${pathToSave}/${
           scale === 1 ? fixedName : `${fixedName}@${scale}x`
         }.png`;
         if (scale === 1) {
@@ -52,7 +53,7 @@ const getUrlImageAWS = async (el: Node[], scale = 1) => {
     name: el.find((el) => el.id === id)!.name,
   }));
 
-  return await downloadFormAWS(icons, scale);
+  return await downloadFormAWS(icons, scale, process.env.ICONS_PATH!);
 };
 
 const getImageByParams = async (node: Node) => {
