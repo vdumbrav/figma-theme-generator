@@ -77,14 +77,15 @@ export async function main() {
       .join("\n    ")}
   </resources>`;
 
-  const theme = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
+  //todo revert Appearance after merge https://github.com/facebook/react-native/pull/39893
+  const theme = `import {Platform, DynamicColorIOS, Appearance} from "react-native";
 const isIos = Platform.OS === "ios";
 export const theme = {
   colors: {
     ${colors
       .map(
         (el) =>
-          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),`,
+          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : Appearance.getColorScheme() != "dark" ? "${el.light}" : "${el.dark}",`, //PlatformColor("@color/${el.name}"),`,
       )
       .join("\n    ")}
   },
