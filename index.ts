@@ -108,7 +108,7 @@ export const theme = {
       )
       .join("\n    ")}
   }
-}`;
+} as const`;
 
   const css = `${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
 @media (prefers-color-scheme: dark) {

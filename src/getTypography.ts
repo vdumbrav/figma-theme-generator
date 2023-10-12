@@ -28,7 +28,7 @@ export const getTypography = async (fileNode: FileNode | null) => {
 export type Style = {
   fontFamily: string;
   fontSize: number;
-  fontWeight: number;
+  fontWeight: "100";
   letterSpacing: number;
   lineHeight: number;
 };
@@ -37,7 +37,7 @@ const getTypographyFromText = (node: TEXT): Style => {
   return {
     fontFamily: node.style.fontPostScriptName || node.style.fontFamily,
     fontSize: node.style.fontSize,
-    fontWeight: node.style.fontWeight,
+    fontWeight: node.style.fontWeight.toString() as "100",
     letterSpacing: node.style.letterSpacing,
     lineHeight: node.style.lineHeightPx,
   };
