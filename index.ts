@@ -5,7 +5,6 @@ import { getSpacings } from "./src/getSpacings";
 import { getBorders } from "./src/getBorders";
 import { getSvgIcons } from "./src/getSvgIcons";
 import { createFile } from "./src/utils";
-import { getPngIcons } from "./src/getPngIcons";
 import { Style, getTypography } from "./src/getTypography";
 import { getPngImgs } from "./src/getPngImgs";
 import { getSvgImgs } from "./src/getSvgImgs";
@@ -20,7 +19,6 @@ export async function main() {
       process.env.FIGMA_SPACINGS_ID!,
       process.env.FIGMA_RADIUS_ID!,
       process.env.FIGMA_SVG_ICONS_ID!,
-      process.env.FIGMA_PNG_ICONS_ID!,
       process.env.FIGMA_TYPOGRAPHY_ID!,
       process.env.FIGMA_PNG_IMG_ID!,
       process.env.FIGMA_SVG_IMG_ID!,
@@ -37,7 +35,6 @@ export async function main() {
   );
   await Promise.all([
     getSvgIcons(nodes.nodes[process.env.FIGMA_SVG_ICONS_ID!]?.document),
-    getPngIcons(nodes.nodes[process.env.FIGMA_PNG_ICONS_ID!]?.document),
     getPngImgs(nodes.nodes[process.env.FIGMA_PNG_IMG_ID!]?.document),
     getSvgImgs(nodes.nodes[process.env.FIGMA_SVG_IMG_ID!]?.document),
   ]);

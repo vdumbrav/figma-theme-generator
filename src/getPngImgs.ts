@@ -1,6 +1,5 @@
 import { Node, createApi } from "./figma-rest-api";
-import { downloadFormAWS } from "./getPngIcons";
-import { Checker, searchTree } from "./utils";
+import { Checker, createFile, fetchRetry, searchTree } from "./utils";
 
 const checker = ((parentOfParent: Node) => {
   return !!(
@@ -51,4 +50,33 @@ export const getPngImgs = async (node?: Node) => {
   } else {
     throw new Error("Png icons not found");
   }
+};
+
+const downloadFormAWS = async (
+  icon: { url: string | null; name: string }[],
+  scale: number,
+  pathToSave: string,
+) => {
+  const iconNames: { name: string; path: string }[] = [];
+  await Promise.all(
+    icon.map(async ({ name, url }) => {
+      if (url) {
+        const image = await fetchRetry(url);
+        const fixedName =
+          "_" +
+          name
+            .replace(/ ./g, (match) => match.charAt(1).toUpperCase())
+            .replace(/\//g, "");
+
+        const path = `${pathToSave}/${
+          scale === 1 ? fixedName : `${fixedName}@${scale}x`
+        }.png`;
+        if (scale === 1) {
+          iconNames.push({ name: fixedName, path });
+        }
+        await createFile(path, image);
+      }
+    }),
+  );
+  return iconNames;
 };
