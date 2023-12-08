@@ -18,7 +18,10 @@ export const getSvgImgs = async (api: Api, path?: string, node?: Node) => {
 
                 const name = elNode.children.find((el) => el.id === id)!.name;
                 const svgPath = path + "/" + name;
-                await createFile(svgPath + `.svg`, image);
+                await createFile(
+                  svgPath + `.svg`,
+                  image.replace(/;[-a-z]*:color\(display-p3.*\)/, ""),
+                );
                 console.log("created svg".padEnd(30, " "), svgPath);
               }
             }),
