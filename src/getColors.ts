@@ -14,7 +14,7 @@ const checker = ((parentOfParent: Node) => {
   );
 }) as Checker;
 
-export const getColors = async (node?: Node) => {
+export const getColors = (node?: Node) => {
   if (node) {
     return searchTree(node, checker).map((node) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

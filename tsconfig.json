@@ -1,5 +1,5 @@
 {
-  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node20/tsconfig"],
+  "extends": "@tsconfig/strictest/tsconfig",
   "ts-node": {
     "transpileOnly": true,
     "files": false
@@ -12,7 +12,8 @@
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "module": "ES2022",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "target": "ES2022"
   },
   "include": ["src/**/*", "core/**/*", "api-figma/**/*", "index.ts"]
 }

@@ -1,7 +1,7 @@
 import { FileNode, Node, NodeCommon, TEXT } from "./figma-rest-api";
 import { searchTree } from "./utils";
 
-export const getTypography = async (fileNode: FileNode | null) => {
+export const getTypography = (fileNode: FileNode | null) => {
   if (fileNode?.document) {
     const stylesIds = Object.keys(fileNode.styles);
     const checker = (

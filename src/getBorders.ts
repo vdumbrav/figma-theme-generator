@@ -1,6 +1,6 @@
 import { Node } from "./figma-rest-api";
 
-export const getBorders = async (node?: Node) => {
+export const getBorders = (node?: Node) => {
   if (node && "children" in node) {
     return node.children.map((el) => {
       if (

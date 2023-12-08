@@ -1,4 +1,4 @@
-.env
+.env.*
 test
 
 .idea
@@ -6,13 +6,4 @@ test
 # node.js
 #
 node_modules/
-npm-debug.log
-yarn-error.log
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
 src/figma-rest-api

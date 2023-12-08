@@ -1,6 +1,6 @@
 import { Node } from "./figma-rest-api";
 
-export const getSpacings = async (node?: Node) => {
+export const getSpacings = (node?: Node) => {
   if (node && "children" in node) {
     return node.children.map((el) => {
       if ("children" in el && el.children[0].type == "TEXT") {

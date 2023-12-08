@@ -5,32 +5,25 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "node --experimental-specifier-resolution=node --loader ts-node/esm index.ts",
-    "prod": "tsc && node build/index.js"
+    "dev": "bun run.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "commander": "^11.0.0",
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.1",
+    "bun-types": "^1.0.15",
     "@tsconfig/strictest": "^2.0.1",
     "@types/lodash": "^4.14.197",
-    "@types/node": "^20.6.0",
     "@types/sharp": "^0.32.0",
     "@typescript-eslint/eslint-plugin": "6.4.0",
     "@typescript-eslint/parser": "6.4.0",
     "eslint": "8.47.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "npm:eslint-plugin-i@^2.28.0-2",
-    "eslint-plugin-jest": "27.2.3",
     "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-react": "7.33.2",
-    "eslint-plugin-react-hooks": "4.6.0",
     "prettier": "^3.0.3",
-    "ts-node": "github:TypeStrong/ts-node",
     "typescript": "^5.2.2"
   },
   "eslintConfig": {
@@ -44,10 +37,7 @@
       "plugin:react-hooks/recommended",
       "plugin:react/recommended",
       "plugin:prettier/recommended"
-    ],
-    "rules": {
-      "no-console": "error"
-    }
+    ]
   },
   "packageManager": "yarn@4.0.0-rc.51"
 }

@@ -3,79 +3,162 @@ import { getColors } from "./src/getColors";
 import { createApi } from "./src/figma-rest-api";
 import { getSpacings } from "./src/getSpacings";
 import { getBorders } from "./src/getBorders";
-import { getSvgIcons } from "./src/getSvgIcons";
+import { getIcons } from "./src/getIcons";
 import { createFile } from "./src/utils";
 import { Style, getTypography } from "./src/getTypography";
 import { getPngImgs } from "./src/getPngImgs";
 import { getSvgImgs } from "./src/getSvgImgs";
-config({ path: "../.env.local" });
-// config();
-export async function main() {
-  const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
+
+type Params = {
+  /**
+   * File ID for styles
+   */
+  figmaFileId: string;
+  /**
+   * Container ID for colors
+   */
+  colorsNodeId: string;
+  /**
+   * Container ID for spacings
+   */
+  spacingsNodeId: string;
+  /**
+   * Container ID for border radii
+   */
+  bordersNodeId: string;
+  /**
+   * Container ID for monochrome SVG icons
+   */
+  iconsNodeId: string;
+  /**
+   * Container ID for typography
+   */
+  typographyNodeId: string;
+  /**
+   * Container ID for PNG icons
+   */
+  pngImgNodeId: string;
+  /**
+   * Container ID for SVG icons
+   */
+  svgImgNodeId: string;
+  /**
+   * Path to place the generated spacings, borders, typography, and colors for iOS in the project
+   */
+  themePath?: string;
+  /**
+   * Path to place the generated light theme colors for Android in the project
+   */
+  androidLightPath?: string;
+  /**
+   * Path to place the generated dark theme colors for Android in the project
+   */
+  androidDarkPath?: string;
+  /**
+   * Path to place the generated SCSS styles in the project
+   */
+  cssPath?: string;
+  /**
+   * Path to place the generated monochrome icons in the project
+   */
+  iconsPath?: string;
+  /**
+   * Path to place the generated images in the project
+   */
+  imgPath?: string;
+  /**
+   * Path to place the generated SVG icons in the project
+   */
+  svgPath?: string;
+  /**
+   * List icons that should be generated as PNG
+   */
+  pngIcons?: {
+    /**
+     * Figma icon node id
+     */
+    id: string;
+    /**
+     * Just for identification
+     */
+    description: string;
+  }[];
+  /**
+   * Path to env file with figma token
+   */
+  envPath?: string;
+};
+
+export async function generate({
+  figmaFileId,
+  colorsNodeId,
+  spacingsNodeId,
+  bordersNodeId,
+  iconsNodeId,
+  typographyNodeId,
+  pngImgNodeId,
+  svgImgNodeId,
+  themePath,
+  androidLightPath,
+  androidDarkPath,
+  cssPath,
+  iconsPath,
+  imgPath,
+  svgPath,
+  pngIcons,
+  envPath,
+}: Params) {
+  const figmaToken = config({ path: envPath || ".env.local" }).parsed?.[
+    "FIGMA_TOKEN"
+  ];
+  if (!figmaToken) {
+    throw new Error("figma token not found");
+  }
+  const apis = createApi({
+    personalAccessToken: figmaToken,
+    fileKey: figmaFileId,
+  });
+  console.log("fetch figma file");
   const nodes = await apis.getFileNodes({
-    fileKey: process.env.FIGMA_FILE_ID!,
+    fileKey: figmaFileId,
     ids: [
-      process.env.FIGMA_COLORS_ID!,
-      process.env.FIGMA_SPACINGS_ID!,
-      process.env.FIGMA_RADIUS_ID!,
-      process.env.FIGMA_SVG_ICONS_ID!,
-      process.env.FIGMA_TYPOGRAPHY_ID!,
-      process.env.FIGMA_PNG_IMG_ID!,
-      process.env.FIGMA_SVG_IMG_ID!,
+      colorsNodeId,
+      spacingsNodeId,
+      bordersNodeId,
+      iconsNodeId,
+      typographyNodeId,
+      pngImgNodeId,
+      svgImgNodeId,
     ],
   });
-  const colors = await getColors(
-    nodes.nodes[process.env.FIGMA_COLORS_ID!]?.document,
-  );
-  const spacings = await getSpacings(
-    nodes.nodes[process.env.FIGMA_SPACINGS_ID!]?.document,
-  );
-  const borders = await getBorders(
-    nodes.nodes[process.env.FIGMA_RADIUS_ID!]?.document,
-  );
+  const colors = getColors(nodes.nodes[colorsNodeId]?.document);
+  const spacings = getSpacings(nodes.nodes[spacingsNodeId]?.document);
+  const borders = getBorders(nodes.nodes[bordersNodeId]?.document);
+  const typography = getTypography(nodes.nodes[typographyNodeId]);
+  console.log("create images");
   await Promise.all([
-    getSvgIcons(nodes.nodes[process.env.FIGMA_SVG_ICONS_ID!]?.document),
-    getPngImgs(nodes.nodes[process.env.FIGMA_PNG_IMG_ID!]?.document),
-    getSvgImgs(nodes.nodes[process.env.FIGMA_SVG_IMG_ID!]?.document),
+    getIcons(apis, iconsPath, pngIcons, nodes.nodes[iconsNodeId]?.document),
+    getPngImgs(apis, imgPath, nodes.nodes[pngImgNodeId]?.document),
+    getSvgImgs(apis, svgPath, nodes.nodes[svgImgNodeId]?.document),
   ]);
 
-  const typography = await getTypography(
-    nodes.nodes[process.env.FIGMA_TYPOGRAPHY_ID!],
-  );
+  console.log("write files");
+  await createThemeFile(colors, spacings, borders, typography, themePath);
+  await createAndroidFiles(colors, androidLightPath, androidDarkPath);
+  await createCssFile(colors, spacings, borders, typography, cssPath);
+  console.log("success");
+}
 
-  const light = `<?xml version="1.0" encoding="utf-8"?>
-  <resources>
-    <color name="primary_dark">#FFFFFF</color>
-
-    ${colors
-      .map(
-        (el) =>
-          `<color name="${el.name}">${
-            el.light.length > 7
-              ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
-              : el.light
-          }</color>`,
-      )
-      .join("\n    ")}
-  </resources>`;
-  const dark = `<?xml version="1.0" encoding="utf-8"?>
-  <resources>
-    <color name="primary_dark">#000000</color>
-
-    ${colors
-      .map(
-        (el) =>
-          `<color name="${el.name}">${
-            el.dark.length > 7
-              ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
-              : el.dark
-          }</color>`,
-      )
-      .join("\n    ")}
-  </resources>`;
-
-  //todo revert Appearance after merge https://github.com/facebook/react-native/pull/39893
-  const theme = `import {Platform, DynamicColorIOS, Appearance} from "react-native";
+const createThemeFile = async (
+  colors: ReturnType<typeof getColors>,
+  spacings: ReturnType<typeof getSpacings>,
+  borders: ReturnType<typeof getBorders>,
+  typography: ReturnType<typeof getTypography>,
+  path?: string,
+) => {
+  if (path) {
+    //TODO: revert Appearance after merge https://github.com/facebook/react-native/pull/39893
+    const file = `import {Platform, DynamicColorIOS, Appearance} from "react-native";
 const isIos = Platform.OS === "ios";
 export const theme = {
   colors: {
@@ -106,8 +189,65 @@ export const theme = {
       .join("\n    ")}
   }
 } as const`;
+    await createFile(path, file);
+  }
+};
 
-  const css = `${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
+const createAndroidFiles = async (
+  colors: ReturnType<typeof getColors>,
+  light?: string,
+  dark?: string,
+) => {
+  if (light) {
+    const file = `<?xml version="1.0" encoding="utf-8"?>
+  <resources>
+    <color name="primary_dark">#FFFFFF</color>
+
+    ${colors
+      .map(
+        (el) =>
+          `<color name="${el.name}">${
+            el.light.length > 7
+              ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
+              : el.light
+          }</color>`,
+      )
+      .join("\n    ")}
+  </resources>`;
+
+    await createFile(light, file);
+  }
+
+  if (dark) {
+    const file = `<?xml version="1.0" encoding="utf-8"?>
+  <resources>
+    <color name="primary_dark">#000000</color>
+
+    ${colors
+      .map(
+        (el) =>
+          `<color name="${el.name}">${
+            el.dark.length > 7
+              ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
+              : el.dark
+          }</color>`,
+      )
+      .join("\n    ")}
+  </resources>`;
+
+    await createFile(dark, file);
+  }
+};
+
+const createCssFile = async (
+  colors: ReturnType<typeof getColors>,
+  spacings: ReturnType<typeof getSpacings>,
+  borders: ReturnType<typeof getBorders>,
+  typography: ReturnType<typeof getTypography>,
+  path?: string,
+) => {
+  if (path) {
+    const file = `${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
 @media (prefers-color-scheme: dark) {
   ${colors.map((el) => `$${el.name}: ${el.dark}`).join(";\n  ")};
 }
@@ -118,14 +258,9 @@ ${typography
   .join(";\n")};
 `;
 
-  process.env.PATH_ANDROID_LIGHT &&
-    (await createFile(process.env.PATH_ANDROID_LIGHT, light));
-  process.env.PATH_ANDROID_DARK &&
-    (await createFile(process.env.PATH_ANDROID_DARK, dark));
-  process.env.PATH_THEME && (await createFile(process.env.PATH_THEME, theme));
-  process.env.PATH_CSS && (await createFile(process.env.PATH_CSS, css));
-}
-main();
+    await createFile(path, file);
+  }
+};
 
 const styleToCss = (style: Style) => {
   return Object.entries(style)

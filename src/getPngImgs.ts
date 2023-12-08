@@ -1,4 +1,4 @@
-import { Node, createApi } from "./figma-rest-api";
+import { Node, Api } from "./figma-rest-api";
 import { Checker, createFile, fetchRetry, searchTree } from "./utils";
 
 const checker = ((parentOfParent: Node) => {
@@ -10,10 +10,13 @@ const checker = ((parentOfParent: Node) => {
   );
 }) as Checker;
 
-const getUrlImageAWS = async (el: Node[], scale = 1) => {
-  const apis = createApi({ personalAccessToken: process.env.FIGMA_TOKEN! });
-  const iconAws = await apis.getImage({
-    fileKey: process.env.FIGMA_FILE_ID!,
+const getUrlImageAWS = async (
+  api: Api,
+  el: Node[],
+  scale = 1,
+  path: string,
+) => {
+  const iconAws = await api.getImage({
     ids: el.map((item) => item.id),
     format: "png",
     scale,
@@ -23,10 +26,10 @@ const getUrlImageAWS = async (el: Node[], scale = 1) => {
     name: el.find((el) => el.id === id)!.name,
   }));
 
-  return await downloadFormAWS(icons, scale, process.env.IMAGES_PATH!);
+  await downloadFormAWS(icons, scale, path);
 };
 
-const getImageByParams = async (node: Node) => {
+const getImageByParams = async (api: Api, node: Node, path: string) => {
   if ("children" in node) {
     const nodes = searchTree(node, checker)
       .map((node) => node.children)
@@ -35,18 +38,19 @@ const getImageByParams = async (node: Node) => {
       .flat();
 
     return await Promise.all([
-      getUrlImageAWS(nodes, 1),
-      getUrlImageAWS(nodes, 2),
-      getUrlImageAWS(nodes, 3),
-      getUrlImageAWS(nodes, 4),
+      getUrlImageAWS(api, nodes, 1, path),
+      getUrlImageAWS(api, nodes, 2, path),
+      getUrlImageAWS(api, nodes, 3, path),
+      getUrlImageAWS(api, nodes, 4, path),
     ]);
   }
   return [];
 };
 
-export const getPngImgs = async (node?: Node) => {
+export const getPngImgs = async (api: Api, path?: string, node?: Node) => {
+  if (!path) return;
   if (node) {
-    await getImageByParams(node);
+    await getImageByParams(api, node, path);
   } else {
     throw new Error("Png icons not found");
   }
@@ -75,6 +79,7 @@ const downloadFormAWS = async (
           iconNames.push({ name: fixedName, path });
         }
         await createFile(path, image);
+        console.log("created png".padEnd(30, " "), path);
       }
     }),
   );
