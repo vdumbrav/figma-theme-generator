@@ -57,11 +57,11 @@ export const searchTree = <T = Node>(
 
 export const createFile = async (
   path: string,
-  content: ArrayBuffer | string,
+  content: Buffer | ArrayBuffer | string,
 ) => {
   await fs.mkdir(path.replace(/\/[^/]*$/, ""), { recursive: true });
   await fs.writeFile(
     path,
-    typeof content === "string" ? content : Buffer.from(content),
+    typeof content === "string" ? content : content instanceof Buffer ? content : Buffer.from(content),
   );
 };
