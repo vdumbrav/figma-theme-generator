@@ -162,6 +162,7 @@ const createThemeFile = async (
 const isIos = Platform.OS === "ios";
 export const theme = {
   colors: {
+    transparent: "transparent",
     ${colors
       .map(
         (el) =>
