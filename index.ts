@@ -157,8 +157,7 @@ const createThemeFile = async (
   path?: string,
 ) => {
   if (path) {
-    //TODO: revert Appearance after merge https://github.com/facebook/react-native/pull/39893
-    const file = `import {Platform, DynamicColorIOS, Appearance} from "react-native";
+    const file = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
 const isIos = Platform.OS === "ios";
 export const theme = {
   colors: {
@@ -166,7 +165,7 @@ export const theme = {
     ${colors
       .map(
         (el) =>
-          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : Appearance.getColorScheme() != "dark" ? "${el.light}" : "${el.dark}",`, //PlatformColor("@color/${el.name}"),`,
+          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),`,
       )
       .join("\n    ")}
   },
