@@ -8,6 +8,7 @@ import { createFile } from "./src/utils";
 import { Style, getTypography } from "./src/getTypography";
 import { getPngImgs } from "./src/getPngImgs";
 import { getSvgImgs } from "./src/getSvgImgs";
+import { getBreakpoints } from "./src/getBreakpoints";
 
 type Params = {
   /**
@@ -26,6 +27,10 @@ type Params = {
    * Container ID for border radii
    */
   bordersNodeId: string;
+  /**
+   * Container ID for breakpoints
+   */
+  breakpointsNodeId?: string;
   /**
    * Container ID for monochrome SVG icons
    */
@@ -90,27 +95,28 @@ type Params = {
 };
 
 export async function generate({
-  figmaFileId,
-  colorsNodeId,
-  spacingsNodeId,
-  bordersNodeId,
-  iconsNodeId,
-  typographyNodeId,
-  pngImgNodeId,
-  svgImgNodeId,
-  themePath,
-  androidLightPath,
-  androidDarkPath,
-  cssPath,
-  iconsPath,
-  imgPath,
-  svgPath,
-  pngIcons,
-  envPath,
-}: Params) {
+                                 figmaFileId,
+                                 colorsNodeId,
+                                 spacingsNodeId,
+                                 bordersNodeId,
+                                 breakpointsNodeId,
+                                 iconsNodeId,
+                                 typographyNodeId,
+                                 pngImgNodeId,
+                                 svgImgNodeId,
+                                 themePath,
+                                 androidLightPath,
+                                 androidDarkPath,
+                                 cssPath,
+                                 iconsPath,
+                                 imgPath,
+                                 svgPath,
+                                 pngIcons,
+                                 envPath,
+                               }: Params) {
   const figmaToken = config({ path: envPath || ".env.local" }).parsed?.[
-    "FIGMA_TOKEN"
-  ];
+      "FIGMA_TOKEN"
+      ];
   if (!figmaToken) {
     throw new Error("figma token not found");
   }
@@ -119,22 +125,24 @@ export async function generate({
     fileKey: figmaFileId,
   });
   console.log("fetch figma file");
+  const ids = [
+    colorsNodeId,
+    spacingsNodeId,
+    bordersNodeId,
+    iconsNodeId,
+    typographyNodeId,
+    pngImgNodeId,
+    svgImgNodeId,
+  ];
   const nodes = await apis.getFileNodes({
     fileKey: figmaFileId,
-    ids: [
-      colorsNodeId,
-      spacingsNodeId,
-      bordersNodeId,
-      iconsNodeId,
-      typographyNodeId,
-      pngImgNodeId,
-      svgImgNodeId,
-    ],
+    ids: breakpointsNodeId ? [...ids, breakpointsNodeId] : ids,
   });
   const colors = getColors(nodes.nodes[colorsNodeId]?.document);
   const spacings = getSpacings(nodes.nodes[spacingsNodeId]?.document);
   const borders = getBorders(nodes.nodes[bordersNodeId]?.document);
   const typography = getTypography(nodes.nodes[typographyNodeId]);
+  const breakpoints = breakpointsNodeId ? getBreakpoints(nodes.nodes[breakpointsNodeId]?.document) : undefined;
   console.log("create images");
   await Promise.all([
     getIcons(apis, iconsPath, pngIcons, nodes.nodes[iconsNodeId]?.document),
@@ -145,16 +153,16 @@ export async function generate({
   console.log("write files");
   await createThemeFile(colors, spacings, borders, typography, themePath);
   await createAndroidFiles(colors, androidLightPath, androidDarkPath);
-  await createCssFile(colors, spacings, borders, typography, cssPath);
+  await createCssFile(colors, spacings, borders, typography, breakpoints, cssPath);
   console.log("success");
 }
 
 const createThemeFile = async (
-  colors: ReturnType<typeof getColors>,
-  spacings: ReturnType<typeof getSpacings>,
-  borders: ReturnType<typeof getBorders>,
-  typography: ReturnType<typeof getTypography>,
-  path?: string,
+    colors: ReturnType<typeof getColors>,
+    spacings: ReturnType<typeof getSpacings>,
+    borders: ReturnType<typeof getBorders>,
+    typography: ReturnType<typeof getTypography>,
+    path?: string,
 ) => {
   if (path) {
     const file = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
@@ -163,11 +171,11 @@ export const theme = {
   colors: {
     transparent: "transparent",
     ${colors
-      .map(
-        (el) =>
-          `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),`,
-      )
-      .join("\n    ")}
+        .map(
+            (el) =>
+                `${el.name}: isIos ? DynamicColorIOS({light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),`,
+        )
+        .join("\n    ")}
   },
   spacings: {
     ${spacings.map((el) => `${el.name}: ${el.value},`).join("\n    ")}
@@ -177,16 +185,16 @@ export const theme = {
   },
   typography: {
     ${typography
-      .map(
-        (el) =>
-          `${el.name}: {\n      ${Object.entries(el.value!)
-            .map(
-              (el) =>
-                `${el[0]}: ${typeof el[1] === "string" ? `"${el[1]}"` : el[1]}`,
-            )
-            .join(",\n      ")}\n    },`,
-      )
-      .join("\n    ")}
+        .map(
+            (el) =>
+                `${el.name}: {\n      ${Object.entries(el.value!)
+                    .map(
+                        (el) =>
+                            `${el[0]}: ${typeof el[1] === "string" ? `"${el[1]}"` : el[1]}`,
+                    )
+                    .join(",\n      ")}\n    },`,
+        )
+        .join("\n    ")}
   }
 } as const`;
     await createFile(path, file);
@@ -194,9 +202,9 @@ export const theme = {
 };
 
 const createAndroidFiles = async (
-  colors: ReturnType<typeof getColors>,
-  light?: string,
-  dark?: string,
+    colors: ReturnType<typeof getColors>,
+    light?: string,
+    dark?: string,
 ) => {
   if (light) {
     const file = `<?xml version="1.0" encoding="utf-8"?>
@@ -204,15 +212,15 @@ const createAndroidFiles = async (
     <color name="primary_dark">#FFFFFF</color>
 
     ${colors
-      .map(
-        (el) =>
-          `<color name="${el.name}">${
-            el.light.length > 7
-              ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
-              : el.light
-          }</color>`,
-      )
-      .join("\n    ")}
+        .map(
+            (el) =>
+                `<color name="${el.name}">${
+                    el.light.length > 7
+                        ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
+                        : el.light
+                }</color>`,
+        )
+        .join("\n    ")}
   </resources>`;
 
     await createFile(light, file);
@@ -224,15 +232,15 @@ const createAndroidFiles = async (
     <color name="primary_dark">#000000</color>
 
     ${colors
-      .map(
-        (el) =>
-          `<color name="${el.name}">${
-            el.dark.length > 7
-              ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
-              : el.dark
-          }</color>`,
-      )
-      .join("\n    ")}
+        .map(
+            (el) =>
+                `<color name="${el.name}">${
+                    el.dark.length > 7
+                        ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
+                        : el.dark
+                }</color>`,
+        )
+        .join("\n    ")}
   </resources>`;
 
     await createFile(dark, file);
@@ -240,11 +248,12 @@ const createAndroidFiles = async (
 };
 
 const createCssFile = async (
-  colors: ReturnType<typeof getColors>,
-  spacings: ReturnType<typeof getSpacings>,
-  borders: ReturnType<typeof getBorders>,
-  typography: ReturnType<typeof getTypography>,
-  path?: string,
+    colors: ReturnType<typeof getColors>,
+    spacings: ReturnType<typeof getSpacings>,
+    borders: ReturnType<typeof getBorders>,
+    typography: ReturnType<typeof getTypography>,
+    breakpoints?: ReturnType<typeof getBreakpoints>,
+    path?: string,
 ) => {
   if (path) {
     const file = `${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
@@ -253,9 +262,10 @@ const createCssFile = async (
 }
 ${spacings.map((el) => `$${el.name}: ${el.value}`).join(";\n")};
 ${borders.map((el) => `$${el.name}: ${el.value}`).join(";\n")};
+${breakpoints?.map((el) => `$_${el}: ${el}`).join(";\n")};
 ${typography
-  .map((el) => `.${el.name} {\n  ${styleToCss(el.value)}\n}`)
-  .join(";\n")};
+        .map((el) => `.${el.name} {\n  ${styleToCss(el.value)}\n}`)
+        .join(";\n")};
 `;
 
     await createFile(path, file);
@@ -264,20 +274,20 @@ ${typography
 
 const styleToCss = (style: Style) => {
   return Object.entries(style)
-    .map(([k, v]) => {
-      const key = k as keyof Style;
-      switch (key) {
-        case "fontFamily":
-          return `font-family: ${v}, sans-serif;`;
-        case "fontSize":
-          return `font-size: ${v}px;`;
-        case "fontWeight":
-          return `font-weight: ${v};`;
-        case "letterSpacing":
-          return `letter-spacing: ${v}px;`;
-        case "lineHeight":
-          return `line-height: ${v}px;`;
-      }
-    })
-    .join("\n  ");
+      .map(([k, v]) => {
+        const key = k as keyof Style;
+        switch (key) {
+          case "fontFamily":
+            return `font-family: ${v}, sans-serif;`;
+          case "fontSize":
+            return `font-size: ${v}px;`;
+          case "fontWeight":
+            return `font-weight: ${v};`;
+          case "letterSpacing":
+            return `letter-spacing: ${v}px;`;
+          case "lineHeight":
+            return `line-height: ${v}px;`;
+        }
+      })
+      .join("\n  ");
 };
