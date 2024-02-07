@@ -10,6 +10,7 @@ await generate({
   pngImgNodeId: "627:134",
   svgImgNodeId: "655:126",
   themePath: "./test/theme.ts",
+  breakpointsNodeId: undefined,
   androidLightPath: "./test/light.xml",
   androidDarkPath: "./test/dark.xml",
   cssPath: undefined,
