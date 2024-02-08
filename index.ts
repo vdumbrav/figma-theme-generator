@@ -95,25 +95,25 @@ type Params = {
 };
 
 export async function generate({
-   figmaFileId,
-   colorsNodeId,
-   spacingsNodeId,
-   bordersNodeId,
-   breakpointsNodeId,
-   iconsNodeId,
-   typographyNodeId,
-   pngImgNodeId,
-   svgImgNodeId,
-   themePath,
-   androidLightPath,
-   androidDarkPath,
-   cssPath,
-   iconsPath,
-   imgPath,
-   svgPath,
-   pngIcons,
-   envPath,
-}: Params) {
+                                   figmaFileId,
+                                   colorsNodeId,
+                                   spacingsNodeId,
+                                   bordersNodeId,
+                                   breakpointsNodeId,
+                                   iconsNodeId,
+                                   typographyNodeId,
+                                   pngImgNodeId,
+                                   svgImgNodeId,
+                                   themePath,
+                                   androidLightPath,
+                                   androidDarkPath,
+                                   cssPath,
+                                   iconsPath,
+                                   imgPath,
+                                   svgPath,
+                                   pngIcons,
+                                   envPath,
+                               }: Params) {
     const figmaToken = config({ path: envPath || ".env.local" }).parsed?.[
         "FIGMA_TOKEN"
         ];
@@ -165,11 +165,11 @@ const createThemeFile = async (
     path?: string,
 ) => {
     if (path) {
-        const file = `${colors ? `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
-const isIos = Platform.OS === "ios";` : ""}
+        const file = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
+const isIos = Platform.OS === "ios";
 export const theme = {
   colors: {
-    transparent: "transparent",${colors ? `
+    transparent: "transparent",
     ${colors
             ?.map(
                 (el) =>
@@ -178,7 +178,7 @@ export const theme = {
       dark: "${el.dark}"
     }) : PlatformColor("@color/${el.name}"), `,
             )
-            .join("\n    ")}` : ""}
+            .join("\n    ")}
   },
   spacings: {
     ${spacings.map((el) => `${el.name}: ${el.value},`).join("\n    ")}
@@ -263,9 +263,9 @@ const createCssFile = async (
 @media (prefers-color-scheme: dark) {
   ${colors.map((el) => `$${el.name}: ${el.dark}`).join(";\n  ")};
 }
-${spacings.map((el) => `$${el.name}: ${el.value}`).join(";\n")};
-${borders.map((el) => `$${el.name}: ${el.value}`).join(";\n")};
-${breakpoints?.map((el) => `$${el.name}: ${el.value}`).join(";\n")};
+${spacings.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+${borders.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
 ${typography
             .map((el) => `.${el.name} {\n  ${styleToCss(el.value)}\n}`)
             .join(";\n")};
