@@ -330,7 +330,7 @@ ${spacings.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
 
 ${borders.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
 
-${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n") ?? ''};
 
 ${typography
   .map((el) => {
