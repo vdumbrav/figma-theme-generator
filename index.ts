@@ -173,10 +173,8 @@ export const theme = {
     ${colors
             ?.map(
                 (el) =>
-                    `${el.name} : isIos ? DynamicColorIOS({
-      light: "${el.light}",
-      dark: "${el.dark}"
-    }) : PlatformColor("@color/${el.name}"), `,
+                    `${el.name}: isIos ? DynamicColorIOS({ light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),
+    ${el.name}Object: { light: "${el.light}", dark: "${el.dark}"},`,
             )
             .join("\n    ")}
   },
