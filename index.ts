@@ -259,13 +259,73 @@ const createCssFile = async (
     path?: string,
 ) => {
     if (path) {
-        const file = `${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
-@media (prefers-color-scheme: dark) {
-  ${colors.map((el) => `$${el.name}: ${el.dark}`).join(";\n  ")};
-}
+const file = `
+@use "sass:map";
+
+${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
+${colors.map((el) => `$${el.name}-dark: ${el.dark}`).join(";\n")};
+
+$themes: (
+  light: (
+    ${colors.map((el) => `${el.name}: $${el.name}`).join(",\n    ")}
+  ),
+  dark: (
+    ${colors.map((el) => `${el.name}: $${el.name}-dark`).join(",\n    ")}
+  ),
+);
+
+@mixin themed {
+    @each $theme, $map in $themes {
+      :global(.#{$theme}) & {
+        $theme-map: () !global;
+  
+        @each $key, $submap in $map {
+          $value: map.get($map, $key);
+          $theme-map: map.merge(
+            $theme-map,
+            (
+              $key: $value,
+            )
+          ) !global;
+        }
+        @content;
+  
+        $theme-map: null !global;
+      }
+    }
+  }
+  
+  @mixin gthemed {
+    @each $theme, $map in $themes {
+      .#{$theme} & {
+        $theme-map: () !global;
+  
+        @each $key, $submap in $map {
+          $value: map.get($map, $key);
+          $theme-map: map.merge(
+            $theme-map,
+            (
+              $key: $value,
+            )
+          ) !global;
+        }
+        @content;
+  
+        $theme-map: null !global;
+      }
+    }
+  }
+  
+  @function t($key) {
+    @return map-get($theme-map, $key);
+  }
+  
 ${spacings.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+
 ${borders.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+
 ${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+
 ${typography
             .map((el) => `.${el.name} {\n  ${styleToCss(el.value)}\n}`)
             .join(";\n")};
