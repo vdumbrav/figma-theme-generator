@@ -14,6 +14,7 @@ await generate({
   androidLightPath: "./test/light.xml",
   androidDarkPath: "./test/dark.xml",
   cssPath: undefined,
+  styleType: 'mixin',
   iconsPath: "./test/icon",
   imgPath: "./test/img",
   svgPath: "./test/img",
