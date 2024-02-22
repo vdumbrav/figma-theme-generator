@@ -169,7 +169,6 @@ const createThemeFile = async (
   typography: ReturnType<typeof getTypography>,
   colors?: ReturnType<typeof getColors>,
   path?: string,
-  styleType?: 'cssClass' | 'mixin',
 ) => {
   if (path) {
     const file = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
