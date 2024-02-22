@@ -1,6 +1,6 @@
 import { generate } from "./index";
 
-await generate({
+generate({
   figmaFileId: "G2eZ01ZtRYTCfSOaDy4vz8",
   colorsNodeId: "230:956",
   spacingsNodeId: "71:4899",
@@ -14,8 +14,9 @@ await generate({
   androidLightPath: "./test/light.xml",
   androidDarkPath: "./test/dark.xml",
   cssPath: undefined,
+  styleType: 'mixin',
   iconsPath: "./test/icon",
   imgPath: "./test/img",
   svgPath: "./test/img",
-  pngIcons: [{ id: "91:2097", name: "test" }],
+  pngIcons: [{ id: "91:2097", description: "" }],
 });
