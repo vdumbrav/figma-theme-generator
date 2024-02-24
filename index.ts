@@ -382,38 +382,35 @@ ${
   }
 };
 
+// Function to generate SCSS mixins for shadows, adapted for global theme classes.
 const generateShadowMixins = (
   shadows: ReturnType<typeof getShadows>
 ): string => {
-  // Reduce shadows into a structured object for easier processing
   const shadowsSCSS = shadows.reduce<
     Record<string, Record<string, ReturnType<typeof getShadows>>>
   >((acc, shadow) => {
-    // Ensure the structure for each shadow name, accounting for Light and Dark color schemes
+    const colorSchemeKey = shadow.colorScheme?.toLowerCase()
+
     if (shadow.name && !acc[shadow.name]) {
-      acc[shadow.name] = { Light: [], Dark: [] };
+      acc[shadow.name] = { light: [], dark: [] };
     }
 
-    // Add the shadow to the appropriate color scheme based on its properties
-    if (shadow.name && shadow.colorScheme) {
-      acc[shadow.name][shadow.colorScheme].push(shadow);
+    if (shadow.name && colorSchemeKey) {
+      acc[shadow.name][colorSchemeKey].push(shadow);
     }
     return acc;
   }, {});
 
-  // Generate SCSS mixins for each shadow group
   const scssMixins = Object.entries(shadowsSCSS)
     .map(([name, schemes]) => {
       const mixinName = `elevations${
         name.charAt(0).toUpperCase() + name.slice(1)
-      }`;
+      }Group`;
       let mixin = `@mixin ${mixinName} {\n`;
 
       Object.entries(schemes).forEach(([scheme, effects]) => {
-        const mediaQuery = scheme.toLowerCase();
-        mixin += `  @media (prefers-color-scheme: ${mediaQuery}) {\n    box-shadow: `;
+        mixin += `  :global(.${scheme}) & {\n    box-shadow: `;
 
-        // Assuming the first shadow effect is representative for the mixin
         const effect = effects.length > 0 ? effects[0] : null;
         if (effect) {
           const shadowValue = `${effect.offsetX}px ${effect.offsetY}px ${effect.blur}px ${effect.spread}px ${effect.color}`;
