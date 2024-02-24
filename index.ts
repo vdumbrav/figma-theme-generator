@@ -361,22 +361,24 @@ ${spacings.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
 
 ${borders.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
 
-${generateShadowMixins(shadows)};
-
-${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n") ?? ""};
-
+${generateShadowMixins(shadows)}
 ${
-  typography
-    .map((el) => {
-      const cssContent = styleToCss(el.value);
-      return styleType === "mixin"
-        ? `@mixin ${el.name} {\n  ${cssContent}\n}`
-        : `.${el.name} {\n  ${cssContent}\n}`;
-    })
-    .join(styleType === "mixin" ? "\n" : ";\n") +
-  (styleType !== "mixin" ? ";" : "")
-};
-`;
+  breakpoints && breakpoints?.length > 0
+    ? `${breakpoints.map((el) => `$${el.name}: ${el.value}px`).join(";\n")}\n`
+    : ""
+}
+${
+  typography?.length > 0
+    ? `${typography
+        .map((el) => {
+          const cssContent = styleToCss(el.value);
+          return styleType === "mixin"
+            ? `@mixin ${el.name} {\n  ${cssContent}\n}`
+            : `.${el.name} {\n  ${cssContent}\n}`;
+        })
+        .join("\n\n")}\n`
+    : ""
+}`;
 
     await createFile(path, file);
   }
@@ -389,7 +391,7 @@ const generateShadowMixins = (
   const shadowsSCSS = shadows.reduce<
     Record<string, Record<string, ReturnType<typeof getShadows>>>
   >((acc, shadow) => {
-    const colorSchemeKey = shadow.colorScheme?.toLowerCase()
+    const colorSchemeKey = shadow.colorScheme?.toLowerCase();
 
     if (shadow.name && !acc[shadow.name]) {
       acc[shadow.name] = { light: [], dark: [] };
