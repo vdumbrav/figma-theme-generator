@@ -14,7 +14,7 @@ generate({
   breakpointsNodeId: undefined,
   androidLightPath: "./test/light.xml",
   androidDarkPath: "./test/dark.xml",
-  cssPath: "./test/styles.scss",
+  cssPath: "./test",
   styleType: 'mixin',
   iconsPath: "./test/icon",
   imgPath: "./test/img",

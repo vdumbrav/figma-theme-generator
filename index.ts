@@ -170,20 +170,16 @@ export async function generate({
   await createThemeFile(
     spacings,
     borders,
-    shadows,
     typography,
     breakpointsNodeId ? undefined : colors,
     themePath
   );
   await createAndroidFiles(colors, androidLightPath, androidDarkPath);
-  await createCssFile(
-    colors,
-    spacings,
-    borders,
-    shadows,
+  await createCssColors(colors, borders, spacings, shadows, `${cssPath}/_variables.css`);
+  await createCssFile(    
     typography,
     breakpoints,
-    cssPath,
+    `${cssPath}/index.scss`,
     styleType
   );
   console.log("success");
@@ -192,7 +188,6 @@ export async function generate({
 const createThemeFile = async (
   spacings: ReturnType<typeof getSpacings>,
   borders: ReturnType<typeof getBorders>,
-  shadows: ReturnType<typeof getShadows>,
   typography: ReturnType<typeof getTypography>,
   colors?: ReturnType<typeof getColors>,
   path?: string
@@ -217,9 +212,7 @@ export const theme = {
   borders: {
     ${borders.map((el) => `${el.name}: ${el.value},`).join("\n    ")}
   },
-  shadows: {
-    ${generateShadowMixins(shadows)}
-  },
+
   typography: {
     ${typography
       .map(
@@ -284,86 +277,42 @@ const createAndroidFiles = async (
   }
 };
 
-const createCssFile = async (
-  colors: ReturnType<typeof getColors>,
-  spacings: ReturnType<typeof getSpacings>,
+const createCssColors  = async (
+  colors: ReturnType<typeof getColors>,  
   borders: ReturnType<typeof getBorders>,
+  spacings: ReturnType<typeof getSpacings>,
   shadows: ReturnType<typeof getShadows>,
+  path?: string
+) => {
+  if (path) {
+    const file = `:root {
+  ${colors.map((el) => `--${el.name}: ${el.light};`).join("\n  ")}
+
+  ${borders.map((el) => `--${el.name}: ${el.value}px;`).join("\n  ")}
+
+  ${spacings.map((el) => `--${el.name}: ${el.value}px;`).join("\n  ")}
+
+  ${generateShadows(shadows, "light")}
+}
+
+html.dark {
+  ${colors.map((el) => `--${el.name}: ${el.dark};`).join("\n  ")}
+
+  ${generateShadows(shadows, "dark")}
+}
+`
+    await createFile(path, file);
+  }
+}
+
+const createCssFile = async (
   typography: ReturnType<typeof getTypography>,
   breakpoints?: ReturnType<typeof getBreakpoints>,
   path?: string,
   styleType: "cssClass" | "mixin" = "cssClass"
 ) => {
   if (path) {
-    const file = `
-@use "sass:map";
-
-${colors.map((el) => `$${el.name}: ${el.light}`).join(";\n")};
-${colors.map((el) => `$${el.name}-dark: ${el.dark}`).join(";\n")};
-
-$themes: (
-  light: (
-    ${colors.map((el) => `${el.name}: $${el.name}`).join(",\n    ")}
-  ),
-  dark: (
-    ${colors.map((el) => `${el.name}: $${el.name}-dark`).join(",\n    ")}
-  ),
-);
-
-@mixin themed {
-    @each $theme, $map in $themes {
-      :global(.#{$theme}) & {
-        $theme-map: () !global;
-  
-        @each $key, $submap in $map {
-          $value: map.get($map, $key);
-          $theme-map: map.merge(
-            $theme-map,
-            (
-              $key: $value,
-            )
-          ) !global;
-        }
-        @content;
-  
-        $theme-map: null !global;
-      }
-    }
-  }
-  
-  @mixin gthemed {
-    @each $theme, $map in $themes {
-      .#{$theme} & {
-        $theme-map: () !global;
-  
-        @each $key, $submap in $map {
-          $value: map.get($map, $key);
-          $theme-map: map.merge(
-            $theme-map,
-            (
-              $key: $value,
-            )
-          ) !global;
-        }
-        @content;
-  
-        $theme-map: null !global;
-      }
-    }
-  }
-  
-  @function t($key) {
-    @return map-get($theme-map, $key);
-  }
-  
-
-${spacings.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
-
-${borders.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
-
-${generateShadowMixins(shadows)};
-
-${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n") ?? ""};
+    const file = `${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
 
 ${
   typography
@@ -373,22 +322,24 @@ ${
         ? `@mixin ${el.name} {\n  ${cssContent}\n}`
         : `.${el.name} {\n  ${cssContent}\n}`;
     })
-    .join(styleType === "mixin" ? "\n" : ";\n") +
+    .join(styleType === "mixin" ? "\n\n" : ";\n") +
   (styleType !== "mixin" ? ";" : "")
-};
+}
 `;
 
     await createFile(path, file);
   }
 };
 
-const generateShadowMixins = (
-  shadows: ReturnType<typeof getShadows>
+const generateShadows = (
+  shadows: ReturnType<typeof getShadows>,
+  theme: "light" | "dark"
 ): string => {
   // Reduce shadows into a structured object for easier processing
   const shadowsSCSS = shadows.reduce<
     Record<string, Record<string, ReturnType<typeof getShadows>>>
   >((acc, shadow) => {
+
     // Ensure the structure for each shadow name, accounting for Light and Dark color schemes
     if (shadow.name && !acc[shadow.name]) {
       acc[shadow.name] = { Light: [], Dark: [] };
@@ -401,32 +352,26 @@ const generateShadowMixins = (
     return acc;
   }, {});
 
-  // Generate SCSS mixins for each shadow group
-  const scssMixins = Object.entries(shadowsSCSS)
+
+  return Object.entries(shadowsSCSS)
     .map(([name, schemes]) => {
-      const mixinName = `elevations${
-        name.charAt(0).toUpperCase() + name.slice(1)
-      }`;
-      let mixin = `@mixin ${mixinName} {\n`;
-
-      Object.entries(schemes).forEach(([scheme, effects]) => {
+      return Object.entries(schemes).map(([scheme, effects]) => {
         const mediaQuery = scheme.toLowerCase();
-        mixin += `  @media (prefers-color-scheme: ${mediaQuery}) {\n    box-shadow: `;
-
-        // Assuming the first shadow effect is representative for the mixin
-        const effect = effects.length > 0 ? effects[0] : null;
-        if (effect) {
-          const shadowValue = `${effect.offsetX}px ${effect.offsetY}px ${effect.blur}px ${effect.spread}px ${effect.color}`;
-          mixin += `${shadowValue};\n  }\n`;
+        
+        if (mediaQuery === theme) {
+          let shadow = `--elevations${
+            name.charAt(0).toUpperCase() + name.slice(1)
+          }: `;
+          const effect = effects.length > 0 ? effects[0] : null;
+          
+          if (effect) {
+            shadow += `${effect.offsetX}px ${effect.offsetY}px ${effect.blur}px ${effect.spread}px ${effect.color};`;
+            return shadow; 
+          }
         }
-      });
-
-      mixin += `}\n`;
-      return mixin;
-    })
-    .join("\n");
-
-  return scssMixins;
+        return "";
+      }).join("");
+    }).join("\n  ");
 };
 
 const styleToCss = (style: Style) => {
