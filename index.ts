@@ -29,10 +29,6 @@ type Params = {
    */
   bordersNodeId: string;
   /**
-   * Container ID for box shadow
-   */
-  shadowsNodeId: string;
-  /**
    * Container ID for breakpoints
    */
   breakpointsNodeId?: string;
@@ -64,10 +60,6 @@ type Params = {
    * Path to place the generated dark theme colors for Android in the project
    */
   androidDarkPath?: string;
-  /**
-   * Path to place the generated SCSS styles in the project
-   */
-  cssPath?: string;
   /**
    * Path to place the generated monochrome icons in the project
    */
@@ -102,7 +94,19 @@ type Params = {
    * or 'mixin' for generating and using SCSS mixins.
    */
   styleType?: "cssClass" | "mixin";
-};
+} & ({
+  /**
+   * Path to place the generated SCSS styles in the project
+   */
+  cssPath: string;
+  /**
+   * Container ID for box shadow
+   */
+  shadowsNodeId: string;
+} | {
+  cssPath?: never;
+  shadowsNodeId?: never;
+});
 
 export async function generate({
   figmaFileId,
@@ -146,15 +150,15 @@ export async function generate({
     typographyNodeId,
     pngImgNodeId,
     svgImgNodeId,
-  ];
+    breakpointsNodeId
+  ].filter((el): el is string => !!el);
   const nodes = await apis.getFileNodes({
     fileKey: figmaFileId,
-    ids: breakpointsNodeId ? [...ids, breakpointsNodeId] : ids,
+    ids: ids,
   });
   const colors = getColors(nodes.nodes[colorsNodeId]?.document);
   const spacings = getSpacings(nodes.nodes[spacingsNodeId]?.document);
   const borders = getBorders(nodes.nodes[bordersNodeId]?.document);
-  const shadows = getShadows(nodes.nodes[shadowsNodeId]?.document);
   const typography = getTypography(nodes.nodes[typographyNodeId]);
   const breakpoints = breakpointsNodeId
     ? getBreakpoints(nodes.nodes[breakpointsNodeId]?.document)
@@ -175,13 +179,16 @@ export async function generate({
     themePath
   );
   await createAndroidFiles(colors, androidLightPath, androidDarkPath);
-  await createCssColors(colors, borders, spacings, shadows, `${cssPath}/_variables.css`);
-  await createCssFile(    
-    typography,
-    breakpoints,
-    `${cssPath}/index.scss`,
-    styleType
-  );
+  if (cssPath) {
+    const shadows = getShadows(nodes.nodes[shadowsNodeId]?.document);
+    await createCssColors(colors, borders, spacings, shadows, `${cssPath}/_variables.css`);
+    await createCssFile(
+      typography,
+      breakpoints,
+      `${cssPath}/index.scss`,
+      styleType
+    );
+  }
   console.log("success");
 }
 
@@ -278,7 +285,7 @@ const createAndroidFiles = async (
 };
 
 const createCssColors  = async (
-  colors: ReturnType<typeof getColors>,  
+  colors: ReturnType<typeof getColors>,
   borders: ReturnType<typeof getBorders>,
   spacings: ReturnType<typeof getSpacings>,
   shadows: ReturnType<typeof getShadows>,
@@ -357,16 +364,16 @@ const generateShadows = (
     .map(([name, schemes]) => {
       return Object.entries(schemes).map(([scheme, effects]) => {
         const mediaQuery = scheme.toLowerCase();
-        
+
         if (mediaQuery === theme) {
           let shadow = `--elevations${
             name.charAt(0).toUpperCase() + name.slice(1)
           }: `;
           const effect = effects.length > 0 ? effects[0] : null;
-          
+
           if (effect) {
             shadow += `${effect.offsetX}px ${effect.offsetY}px ${effect.blur}px ${effect.spread}px ${effect.color};`;
-            return shadow; 
+            return shadow;
           }
         }
         return "";
