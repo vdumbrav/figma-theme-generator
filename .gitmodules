@@ -1,4 +1,4 @@
 [submodule "src/figma-rest-api"]
 	path = src/figma-rest-api
-	url = git@github.com:FrontGen/api-figma.git
+	url = https://github.com/FrontGen/api-figma.git
 	branch = main
