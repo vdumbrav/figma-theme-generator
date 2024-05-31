@@ -35,7 +35,7 @@ type Params = {
   /**
    * Container ID for monochrome SVG icons
    */
-  iconsNodeId: string;
+  iconsNodeId?: string;
   /**
    * Container ID for typography
    */
@@ -43,11 +43,11 @@ type Params = {
   /**
    * Container ID for PNG icons
    */
-  pngImgNodeId: string;
+  pngImgNodeId?: string;
   /**
    * Container ID for SVG icons
    */
-  svgImgNodeId: string;
+  svgImgNodeId?: string;
   /**
    * Path to place the generated spacings, borders, typography, and colors for iOS in the project
    */
@@ -94,19 +94,22 @@ type Params = {
    * or 'mixin' for generating and using SCSS mixins.
    */
   styleType?: "cssClass" | "mixin";
-} & ({
-  /**
-   * Path to place the generated SCSS styles in the project
-   */
-  cssPath: string;
-  /**
-   * Container ID for box shadow
-   */
-  shadowsNodeId: string;
-} | {
-  cssPath?: never;
-  shadowsNodeId?: never;
-});
+} & (
+  | {
+      /**
+       * Path to place the generated SCSS styles in the project
+       */
+      cssPath: string;
+      /**
+       * Container ID for box shadow
+       */
+      shadowsNodeId: string;
+    }
+  | {
+      cssPath?: never;
+      shadowsNodeId?: never;
+    }
+);
 
 export async function generate({
   figmaFileId,
@@ -150,7 +153,7 @@ export async function generate({
     typographyNodeId,
     pngImgNodeId,
     svgImgNodeId,
-    breakpointsNodeId
+    breakpointsNodeId,
   ].filter((el): el is string => !!el);
   const nodes = await apis.getFileNodes({
     fileKey: figmaFileId,
@@ -165,9 +168,15 @@ export async function generate({
     : undefined;
   console.log("create images");
   await Promise.all([
-    getIcons(apis, iconsPath, pngIcons, nodes.nodes[iconsNodeId]?.document),
-    getPngImgs(apis, imgPath, nodes.nodes[pngImgNodeId]?.document),
-    getSvgImgs(apis, svgPath, nodes.nodes[svgImgNodeId]?.document),
+    iconsNodeId
+      ? getIcons(apis, iconsPath, pngIcons, nodes.nodes[iconsNodeId]?.document)
+      : [],
+    pngImgNodeId
+      ? getPngImgs(apis, imgPath, nodes.nodes[pngImgNodeId]?.document)
+      : [],
+    svgImgNodeId
+      ? getSvgImgs(apis, svgPath, nodes.nodes[svgImgNodeId]?.document)
+      : [],
   ]);
 
   console.log("write files");
@@ -176,17 +185,23 @@ export async function generate({
     borders,
     typography,
     breakpointsNodeId ? undefined : colors,
-    themePath
+    themePath,
   );
   await createAndroidFiles(colors, androidLightPath, androidDarkPath);
   if (cssPath) {
     const shadows = getShadows(nodes.nodes[shadowsNodeId]?.document);
-    await createCssColors(colors, borders, spacings, shadows, `${cssPath}/_variables.css`);
+    await createCssColors(
+      colors,
+      borders,
+      spacings,
+      shadows,
+      `${cssPath}/_variables.css`,
+    );
     await createCssFile(
       typography,
       breakpoints,
       `${cssPath}/index.scss`,
-      styleType
+      styleType,
     );
   }
   console.log("success");
@@ -197,7 +212,7 @@ const createThemeFile = async (
   borders: ReturnType<typeof getBorders>,
   typography: ReturnType<typeof getTypography>,
   colors?: ReturnType<typeof getColors>,
-  path?: string
+  path?: string,
 ) => {
   if (path) {
     const file = `import {Platform, DynamicColorIOS, PlatformColor} from "react-native";
@@ -209,7 +224,7 @@ export const theme = {
       ?.map(
         (el) =>
           `${el.name}: isIos ? DynamicColorIOS({ light: "${el.light}", dark: "${el.dark}"}) : PlatformColor("@color/${el.name}"),
-    ${el.name}Object: { light: "${el.light}", dark: "${el.dark}"},`
+    ${el.name}Object: { light: "${el.light}", dark: "${el.dark}"},`,
       )
       .join("\n    ")}
   },
@@ -227,9 +242,9 @@ export const theme = {
           `${el.name}: {\n      ${Object.entries(el.value!)
             .map(
               (el) =>
-                `${el[0]}: ${typeof el[1] === "string" ? `"${el[1]}"` : el[1]}`
+                `${el[0]}: ${typeof el[1] === "string" ? `"${el[1]}"` : el[1]}`,
             )
-            .join(",\n      ")}\n    },`
+            .join(",\n      ")}\n    },`,
       )
       .join("\n    ")}
   }
@@ -241,7 +256,7 @@ export const theme = {
 const createAndroidFiles = async (
   colors: ReturnType<typeof getColors>,
   light?: string,
-  dark?: string
+  dark?: string,
 ) => {
   if (light) {
     const file = `<?xml version="1.0" encoding="utf-8"?>
@@ -255,7 +270,7 @@ const createAndroidFiles = async (
             el.light.length > 7
               ? "#" + el.light.slice(-2) + el.light.slice(1, 7)
               : el.light
-          }</color>`
+          }</color>`,
       )
       .join("\n    ")}
   </resources>`;
@@ -275,7 +290,7 @@ const createAndroidFiles = async (
             el.dark.length > 7
               ? "#" + el.dark.slice(-2) + el.dark.slice(1, 7)
               : el.dark
-          }</color>`
+          }</color>`,
       )
       .join("\n    ")}
   </resources>`;
@@ -284,12 +299,12 @@ const createAndroidFiles = async (
   }
 };
 
-const createCssColors  = async (
+const createCssColors = async (
   colors: ReturnType<typeof getColors>,
   borders: ReturnType<typeof getBorders>,
   spacings: ReturnType<typeof getSpacings>,
   shadows: ReturnType<typeof getShadows>,
-  path?: string
+  path?: string,
 ) => {
   if (path) {
     const file = `:root {
@@ -307,19 +322,21 @@ html.dark {
 
   ${generateShadows(shadows, "dark")}
 }
-`
+`;
     await createFile(path, file);
   }
-}
+};
 
 const createCssFile = async (
   typography: ReturnType<typeof getTypography>,
   breakpoints?: ReturnType<typeof getBreakpoints>,
   path?: string,
-  styleType: "cssClass" | "mixin" = "cssClass"
+  styleType: "cssClass" | "mixin" = "cssClass",
 ) => {
   if (path) {
-    const file = `${breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n")};
+    const file = `${breakpoints
+      ?.map((el) => `$${el.name}: ${el.value}px`)
+      .join(";\n")};
 
 ${
   typography
@@ -340,13 +357,12 @@ ${
 
 const generateShadows = (
   shadows: ReturnType<typeof getShadows>,
-  theme: "light" | "dark"
+  theme: "light" | "dark",
 ): string => {
   // Reduce shadows into a structured object for easier processing
   const shadowsSCSS = shadows.reduce<
     Record<string, Record<string, ReturnType<typeof getShadows>>>
   >((acc, shadow) => {
-
     // Ensure the structure for each shadow name, accounting for Light and Dark color schemes
     if (shadow.name && !acc[shadow.name]) {
       acc[shadow.name] = { Light: [], Dark: [] };
@@ -359,26 +375,28 @@ const generateShadows = (
     return acc;
   }, {});
 
-
   return Object.entries(shadowsSCSS)
     .map(([name, schemes]) => {
-      return Object.entries(schemes).map(([scheme, effects]) => {
-        const mediaQuery = scheme.toLowerCase();
+      return Object.entries(schemes)
+        .map(([scheme, effects]) => {
+          const mediaQuery = scheme.toLowerCase();
 
-        if (mediaQuery === theme) {
-          let shadow = `--elevations${
-            name.charAt(0).toUpperCase() + name.slice(1)
-          }: `;
-          const effect = effects.length > 0 ? effects[0] : null;
+          if (mediaQuery === theme) {
+            let shadow = `--elevations${
+              name.charAt(0).toUpperCase() + name.slice(1)
+            }: `;
+            const effect = effects.length > 0 ? effects[0] : null;
 
-          if (effect) {
-            shadow += `${effect.offsetX}px ${effect.offsetY}px ${effect.blur}px ${effect.spread}px ${effect.color};`;
-            return shadow;
+            if (effect) {
+              shadow += `${effect.offsetX}px ${effect.offsetY}px ${effect.blur}px ${effect.spread}px ${effect.color};`;
+              return shadow;
+            }
           }
-        }
-        return "";
-      }).join("");
-    }).join("\n  ");
+          return "";
+        })
+        .join("");
+    })
+    .join("\n  ");
 };
 
 const styleToCss = (style: Style) => {
