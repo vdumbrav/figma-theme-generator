@@ -94,6 +94,10 @@ type Params = {
    * or 'mixin' for generating and using SCSS mixins.
    */
   styleType?: "cssClass" | "mixin";
+  /**
+   * Path to place the generated names of mixins styles in the project
+   */
+  typographyPath?: string;
 } & (
   | {
       /**
@@ -132,6 +136,7 @@ export async function generate({
   pngIcons,
   envPath,
   styleType,
+  typographyPath,
 }: Params) {
   const figmaToken = config({ path: envPath || ".env.local" }).parsed?.[
     "FIGMA_TOKEN"
@@ -163,6 +168,7 @@ export async function generate({
   const spacings = getSpacings(nodes.nodes[spacingsNodeId]?.document);
   const borders = getBorders(nodes.nodes[bordersNodeId]?.document);
   const typography = getTypography(nodes.nodes[typographyNodeId]);
+
   const breakpoints = breakpointsNodeId
     ? getBreakpoints(nodes.nodes[breakpointsNodeId]?.document)
     : undefined;
@@ -188,6 +194,15 @@ export async function generate({
     themePath,
   );
   await createAndroidFiles(colors, androidLightPath, androidDarkPath);
+  if (typographyPath) {
+    createTypographyFile(typography, typographyPath);
+    createCssFile(
+      typography,
+      undefined,
+      `${typographyPath}/typography.module.scss`,
+      "cssClass",
+    );
+  }
   if (cssPath) {
     const shadows = getShadows(nodes.nodes[shadowsNodeId]?.document);
     await createCssColors(
@@ -334,9 +349,12 @@ const createCssFile = async (
   styleType: "cssClass" | "mixin" = "cssClass",
 ) => {
   if (path) {
-    const file = `${breakpoints
-      ?.map((el) => `$${el.name}: ${el.value}px`)
-      .join(";\n")};
+    const file = `${
+      breakpoints
+        ? breakpoints?.map((el) => `$${el.name}: ${el.value}px`).join(";\n") +
+          ";"
+        : ""
+    }
 
 ${
   typography
@@ -346,7 +364,7 @@ ${
         ? `@mixin ${el.name} {\n  ${cssContent}\n}`
         : `.${el.name} {\n  ${cssContent}\n}`;
     })
-    .join(styleType === "mixin" ? "\n\n" : ";\n") +
+    .join(styleType === "mixin" ? "\n\n" : ";\n\n") +
   (styleType !== "mixin" ? ";" : "")
 }
 `;
@@ -417,4 +435,14 @@ const styleToCss = (style: Style) => {
       }
     })
     .join("\n  ");
+};
+
+const createTypographyFile = async (
+  typography: ReturnType<typeof getTypography>,
+  path: string,
+) => {
+  const data = `export const typography = [
+  ${typography.map((el) => `'${el.name}'`).join(",\n  ")},
+];\n`;
+  await createFile(`${path}/typography.ts`, data);
 };

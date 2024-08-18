@@ -15,7 +15,7 @@ generate({
   androidLightPath: "./test/light.xml",
   androidDarkPath: "./test/dark.xml",
   cssPath: "./test",
-  styleType: 'mixin',
+  styleType: "mixin",
   iconsPath: "./test/icon",
   imgPath: "./test/img",
   svgPath: "./test/img",
